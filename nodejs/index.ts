@@ -496,7 +496,7 @@ async function getNewCategoryItems(
   if (itemID > 0 && createdAt > 0) {
     const [rows] = await db.query(
       base +
-        " WHERE `status` IN (?,?) AND `c1`.`category_id` IN (?) AND (`items`.`created_at` < ? OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT ?",
+        " WHERE `status` IN (?,?) AND `category_id` IN (?) AND (`items`.`created_at` < ? OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT ?",
       [
         ItemStatusOnSale,
         ItemStatusSoldOut,
@@ -514,7 +514,7 @@ async function getNewCategoryItems(
   } else {
     const [rows] = await db.query(
       base +
-        " WHERE `status` IN (?,?) AND `c1`.`category_id` IN (?) ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT ?",
+        " WHERE `status` IN (?,?) AND `category_id` IN (?) ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT ?",
       [ItemStatusOnSale, ItemStatusSoldOut, categoryIDs, ItemsPerPage + 1]
     );
 
