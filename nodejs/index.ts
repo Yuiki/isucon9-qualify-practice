@@ -117,16 +117,14 @@ type Item = {
   category_id: number;
   created_at: Date;
   updated_at: Date;
+};
+
+type JoinedItem = Item & {
   account_name?: string;
   num_sell_items?: number;
   parent_id?: number;
   category_name?: string;
   parent_category_name?: string;
-};
-
-type JoinedItem = Item & {
-  account_name?: string;
-  category_name?: string;
 };
 
 type ItemSimple = {
@@ -360,7 +358,7 @@ async function getNewItems(
     }
   }
 
-  const items: Item[] = [];
+  const items: JoinedItem[] = [];
   const db = await getDBConnection();
   const base =
     "SELECT `items`.*, `users`.`account_name`, `c1`.`parent_id`, `c1`.`category_name`, `c2`.`category_name` AS parent_category_name FROM `items` LEFT JOIN `users` ON `items`.`seller_id` = `users`.`id` LEFT JOIN `categories` c1 ON `items`.`category_id` = `c1`.`id` LEFT JOIN `categories` c2 ON `c1`.`parent_id` = `c2`.`id`";
@@ -492,10 +490,13 @@ async function getNewCategoryItems(
     }
   }
 
-  const items: Item[] = [];
+  const items: JoinedItem[] = [];
+  const base =
+    "SELECT `items`.*, `users`.`account_name`, `c1`.`parent_id`, `c1`.`category_name`, `c2`.`category_name` AS parent_category_name FROM `items` LEFT JOIN `users` ON `items`.`seller_id` = `users`.`id` LEFT JOIN `categories` c1 ON `items`.`category_id` = `c1`.`id` LEFT JOIN `categories` c2 ON `c1`.`parent_id` = `c2`.`id`";
   if (itemID > 0 && createdAt > 0) {
     const [rows] = await db.query(
-      "SELECT * FROM `items` WHERE `status` IN (?,?) AND category_id IN (?) AND (`created_at` < ? OR (`created_at` <= ? AND `id` < ?)) ORDER BY `created_at` DESC, `id` DESC LIMIT ?",
+      base +
+        " WHERE `status` IN (?,?) AND `c1`.`category_id` IN (?) AND (`items`.`created_at` < ? OR (`items`.`created_at` <= ? AND `items`.`id` < ?)) ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT ?",
       [
         ItemStatusOnSale,
         ItemStatusSoldOut,
@@ -508,30 +509,29 @@ async function getNewCategoryItems(
     );
 
     for (const row of rows) {
-      items.push(row as Item);
+      items.push(row as JoinedItem);
     }
   } else {
     const [rows] = await db.query(
-      "SELECT * FROM `items` WHERE `status` IN (?,?) AND category_id IN (?) ORDER BY `created_at` DESC, `id` DESC LIMIT ?",
+      base +
+        " WHERE `status` IN (?,?) AND `c1`.`category_id` IN (?) ORDER BY `items`.`created_at` DESC, `items`.`id` DESC LIMIT ?",
       [ItemStatusOnSale, ItemStatusSoldOut, categoryIDs, ItemsPerPage + 1]
     );
 
     for (const row of rows) {
-      items.push(row as Item);
+      items.push(row as JoinedItem);
     }
   }
 
   let itemSimples: ItemSimple[] = [];
 
   for (const item of items) {
-    const seller = await getUserSimpleByID(db, item.seller_id);
-    if (seller === null) {
+    if (!item.account_name) {
       replyError(reply, "seller not found", 404);
       await db.release();
       return;
     }
-    const category = await getCategoryByID(db, item.category_id);
-    if (category === null) {
+    if (!item.category_name) {
       replyError(reply, "category not found", 404);
       await db.release();
       return;
@@ -540,13 +540,22 @@ async function getNewCategoryItems(
     itemSimples.push({
       id: item.id,
       seller_id: item.seller_id,
-      seller: seller,
+      seller: {
+        id: item.seller_id,
+        account_name: item.account_name!,
+        num_sell_items: item.num_sell_items!,
+      },
       status: item.status,
       name: item.name,
       price: item.price,
       image_url: getImageURL(item.image_name),
       category_id: item.category_id,
-      category: category,
+      category: {
+        id: item.category_id,
+        parent_id: item.parent_id!,
+        category_name: item.category_name,
+        parent_category_name: item.parent_category_name,
+      },
       created_at: item.created_at.getTime(),
     });
   }
