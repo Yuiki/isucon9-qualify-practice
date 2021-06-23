@@ -367,7 +367,7 @@ async function getNewItems(
   if (itemId > 0 && createdAt > 0) {
     const [rows] = await db.query(
       base +
-        " WHERE `status` IN (?,?) AND (`items`.`created_at` < ? OR (``items`.created_at` <= ? AND `id` < ?)) ORDER BY `items`.`created_at` DESC, `id` DESC LIMIT ?",
+        " WHERE `status` IN (?,?) AND (`items`.`created_at` < ? OR (`items`.`created_at` <= ? AND `id` < ?)) ORDER BY `items`.`created_at` DESC, `id` DESC LIMIT ?",
       [
         ItemStatusOnSale,
         ItemStatusSoldOut,
