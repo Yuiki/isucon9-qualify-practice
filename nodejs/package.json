@@ -8,6 +8,7 @@
     "start": "ts-node --files ./index.ts",
     "dev": "ts-node-dev --files ./index.ts",
     "test": "tsc --noEmit",
+    "build": "tsc",
     "update-dependencies": "rm -rf node_modules && npm install && npm dedupe"
   },
   "engines": {
