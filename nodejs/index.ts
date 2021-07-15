@@ -1,3 +1,4 @@
+import "newrelic";
 import { IncomingMessage, ServerResponse } from "http";
 import util, { isNullOrUndefined, types } from "util";
 import childProcess from "child_process";
@@ -19,7 +20,6 @@ import {
   shipmentRequest,
   shipmentStatus,
 } from "./api";
-import "newrelic";
 
 const execFile = util.promisify(childProcess.execFile);
 
