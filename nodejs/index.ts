@@ -19,6 +19,7 @@ import {
   shipmentRequest,
   shipmentStatus,
 } from "./api";
+import "newrelic";
 
 const execFile = util.promisify(childProcess.execFile);
 

@@ -33,6 +33,7 @@
     "fastify-plugin": "^1.6",
     "fastify-static": "^2.5",
     "mysql2": "^1.6",
+    "newrelic": "^7.5.2",
     "trace-error": "^1.0.3"
   }
 }
