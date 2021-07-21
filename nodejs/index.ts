@@ -1,4 +1,4 @@
-import "newrelic";
+// import "newrelic";
 import { IncomingMessage, ServerResponse } from "http";
 import util, { isNullOrUndefined, types } from "util";
 import childProcess from "child_process";
