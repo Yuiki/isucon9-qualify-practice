@@ -314,6 +314,8 @@ async function postInitialize(
 
   const db = await getDBConnection();
 
+  initCategories(db);
+
   configs = null;
 
   await db.query(
@@ -336,6 +338,15 @@ async function postInitialize(
   await db.release();
 
   reply.code(200).type("application/json").send(res);
+}
+
+let categories: Map<number, Category> = new Map();
+
+async function initCategories(db: MySQLQueryable): Promise<void> {
+  const [rows] = await db.query(
+    "SELECT `c1`.*, `c2`.`category_name` AS `parent_category_name` FROM `categories` `c1` LEFT JOIN `categories` `c2` ON `c1`.`parent_id` = `c2`.`id`"
+  );
+  categories = new Map(rows.map((row) => [row.id, row]));
 }
 
 async function getNewItems(
@@ -2042,12 +2053,7 @@ async function getSettings(
   res.payment_service_url = await getPaymentServiceURL(db);
   res.csrf_token = csrfToken;
 
-  const categories: Category[] = [];
-  const [rows] = await db.query("SELECT * FROM `categories`", []);
-  for (const row of rows) {
-    categories.push(row as Category);
-  }
-  res.categories = categories;
+  res.categories = Array.from(categories.values());
 
   await db.release();
 
@@ -2239,20 +2245,10 @@ async function getUserSimpleByID(
   return null;
 }
 
-let categories: Map<number, Category> | null = null;
-
 async function getCategoryByID(
   db: MySQLQueryable,
   categoryId: number
 ): Promise<Category | null> {
-  if (!categories) {
-    const [rows] = await db.query(
-      "SELECT `c1`.*, `c2`.`category_name` AS `parent_category_name` FROM `categories` `c1` LEFT JOIN `categories` `c2` ON `c1`.`parent_id` = `c2`.`id`",
-      [categoryId]
-    );
-    categories = new Map(rows.map((row) => [row.id, row]));
-  }
-
   return categories.get(categoryId) ?? null;
 }
 
