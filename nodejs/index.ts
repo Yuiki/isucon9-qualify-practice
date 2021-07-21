@@ -348,7 +348,6 @@ async function initCategories(db: MySQLQueryable): Promise<void> {
     "SELECT `c1`.*, `c2`.`category_name` AS `parent_category_name` FROM `categories` `c1` LEFT JOIN `categories` `c2` ON `c1`.`parent_id` = `c2`.`id`"
   );
   categories = new Map(rows.map((row) => [row.id, row]));
-  console.log(categories.size);
 }
 
 let userSimples: Map<number, UserSimple> = new Map();
@@ -357,7 +356,7 @@ async function initUserSimples(db: MySQLQueryable): Promise<void> {
   const [rows] = await db.query("SELECT * FROM `users`");
   userSimples = new Map(
     rows.map((row) => [
-      row.name,
+      row.id,
       {
         id: row.id,
         account_name: row.account_name,
