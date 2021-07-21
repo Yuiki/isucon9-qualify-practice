@@ -314,6 +314,8 @@ async function postInitialize(
 
   const db = await getDBConnection();
 
+  configs = null;
+
   await db.query(
     "INSERT INTO `configs` (`name`, `val`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `val` = VALUES(`val`)",
     ["payment_service_url", ri.payment_service_url]
@@ -2284,25 +2286,17 @@ async function getRandomString(length: number): Promise<string> {
   });
 }
 
+let configs: Map<string, string> | null = null;
+
 async function getConfigByName(
   db: MySQLQueryable,
   name: string
 ): Promise<string | null> {
-  let config: Config | null = null;
-  {
-    const [rows] = await db.query("SELECT * FROM `configs` WHERE `name` = ?", [
-      name,
-    ]);
-    for (const row of rows) {
-      config = row as Config;
-    }
+  if (!configs) {
+    const [rows] = await db.query("SELECT * FROM `configs`");
+    configs = new Map(rows.map((row) => [row.name, row.val]));
   }
-
-  if (config === null) {
-    return null;
-  }
-
-  return config.val;
+  return configs.get(name) ?? null;
 }
 
 async function getPaymentServiceURL(db: MySQLQueryable): Promise<string> {
