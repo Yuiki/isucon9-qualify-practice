@@ -1190,65 +1190,64 @@ async function postBuy(
   );
 
   try {
-    const scr = await shipmentCreate(await getShipmentServiceURL(db), {
-      to_address: buyer.address,
-      to_name: buyer.account_name,
-      from_address: seller.address,
-      from_name: seller.account_name,
-    });
-
-    try {
-      const pstr = await paymentToken(await getPaymentServiceURL(db), {
+    const [scr, pstr] = await Promise.all([
+      shipmentCreate(await getShipmentServiceURL(db), {
+        to_address: buyer.address,
+        to_name: buyer.account_name,
+        from_address: seller.address,
+        from_name: seller.account_name,
+      }).catch((e) => {
+        replyError(reply, "failed to request to shipment service", 500);
+        throw e;
+      }),
+      paymentToken(await getPaymentServiceURL(db), {
         shop_id: PaymentServiceIsucariShopID.toString(),
         token: req.body.token,
         api_key: PaymentServiceIsucariAPIKey,
         price: targetItem.price,
-      });
+      }).catch((e) => {
+        replyError(reply, "payment service is failed", 500);
+        throw e;
+      }),
+    ]);
 
-      if (pstr.status === "invalid") {
-        replyError(reply, "カード情報に誤りがあります", 400);
-        await db.rollback();
-        await db.release();
-        return;
-      }
-      if (pstr.status === "fail") {
-        replyError(reply, "カードの残高が足りません", 400);
-        await db.rollback();
-        await db.release();
-        return;
-      }
-
-      if (pstr.status !== "ok") {
-        replyError(reply, "想定外のエラー", 400);
-        await db.rollback();
-        await db.release();
-        return;
-      }
-
-      await db.query(
-        "INSERT INTO `shippings` (`transaction_evidence_id`, `status`, `item_name`, `item_id`, `reserve_id`, `reserve_time`, `to_address`, `to_name`, `from_address`, `from_name`, `img_binary`) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-        [
-          transactionEvidenceId,
-          ShippingsStatusInitial,
-          targetItem.name,
-          targetItem.id,
-          scr.reserve_id,
-          scr.reserve_time,
-          buyer.address,
-          buyer.account_name,
-          seller.address,
-          seller.account_name,
-          "",
-        ]
-      );
-    } catch (e) {
-      replyError(reply, "payment service is failed", 500);
+    if (pstr.status === "invalid") {
+      replyError(reply, "カード情報に誤りがあります", 400);
       await db.rollback();
       await db.release();
       return;
     }
+    if (pstr.status === "fail") {
+      replyError(reply, "カードの残高が足りません", 400);
+      await db.rollback();
+      await db.release();
+      return;
+    }
+
+    if (pstr.status !== "ok") {
+      replyError(reply, "想定外のエラー", 400);
+      await db.rollback();
+      await db.release();
+      return;
+    }
+
+    await db.query(
+      "INSERT INTO `shippings` (`transaction_evidence_id`, `status`, `item_name`, `item_id`, `reserve_id`, `reserve_time`, `to_address`, `to_name`, `from_address`, `from_name`, `img_binary`) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+      [
+        transactionEvidenceId,
+        ShippingsStatusInitial,
+        targetItem.name,
+        targetItem.id,
+        scr.reserve_id,
+        scr.reserve_time,
+        buyer.address,
+        buyer.account_name,
+        seller.address,
+        seller.account_name,
+        "",
+      ]
+    );
   } catch (error) {
-    replyError(reply, "failed to request to shipment service", 500);
     await db.rollback();
     await db.release();
     return;
