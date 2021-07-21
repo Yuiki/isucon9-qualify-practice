@@ -35,7 +35,8 @@ CREATE TABLE `items` (
   INDEX idx_sta_cre (`status`, `created_at`),
   INDEX idx_created_at (`created_at`),
   INDEX idx_sel_sta_cre (`seller_id`, `status`, `created_at`),
-  INDEX idx_buyer_id (`buyer_id`)
+  INDEX idx_buyer_id (`buyer_id`),
+  INDEX idx_buy_sta_cre (`buyer_id`, `status`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4;
 
 DROP TABLE IF EXISTS `transaction_evidences`;
