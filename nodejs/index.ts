@@ -2067,7 +2067,7 @@ async function postLogin(
     password === ""
   ) {
     replyError(reply, "all parameters are required", 400);
-    return;
+    return Promise.resolve();
   }
 
   const db = await getDBConnection();
