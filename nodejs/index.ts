@@ -733,10 +733,11 @@ async function getTransactions(
       }
 
       try {
-        const res = await shipmentStatus(await getShipmentServiceURL(db), {
-          reserve_id: shipping.reserve_id,
-        });
-        itemDetail.shipping_status = res.status;
+        const [rows] = await db.query(
+          "SELECT * FROM `shippings` WHERE `reserve_id` = ?",
+          [shipping.reserve_id]
+        );
+        itemDetail.shipping_status = rows[0].status;
       } catch (error) {
         replyError(reply, "failed to request to shipment service");
         await db.rollback();
