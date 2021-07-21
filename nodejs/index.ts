@@ -364,7 +364,6 @@ async function initUserSimples(db: MySQLQueryable): Promise<void> {
       },
     ])
   );
-  console.log(userSimples.size);
 }
 
 async function getNewItems(
