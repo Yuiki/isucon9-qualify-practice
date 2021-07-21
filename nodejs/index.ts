@@ -2236,24 +2236,21 @@ async function getUserSimpleByID(
   return null;
 }
 
+let categories: Map<number, Category> | null = null;
+
 async function getCategoryByID(
   db: MySQLQueryable,
   categoryId: number
 ): Promise<Category | null> {
-  const [rows] = await db.query("SELECT * FROM `categories` WHERE `id` = ?", [
-    categoryId,
-  ]);
-  for (const row of rows) {
-    const category = row as Category;
-    if (category.parent_id !== undefined && category.parent_id != 0) {
-      const parentCategory = await getCategoryByID(db, category.parent_id);
-      if (parentCategory !== null) {
-        category.parent_category_name = parentCategory.category_name;
-      }
-    }
-    return category;
+  if (!categories) {
+    const [rows] = await db.query(
+      "SELECT `c1`.*, `c2`.`category_name` AS `parent_category_name` FROM `categories` `c1` LEFT JOIN `categories` `c2` ON `c1`.`parent_id` = `c2`.`id`",
+      [categoryId]
+    );
+    categories = new Map(rows.map((row) => [row.id, row]));
   }
-  return null;
+
+  return categories.get(categoryId) ?? null;
 }
 
 async function encryptPassword(password: string): Promise<string> {
