@@ -9,13 +9,15 @@
     "dev": "ts-node-dev --files ./index.ts",
     "test": "tsc --noEmit",
     "build": "tsc",
-    "update-dependencies": "rm -rf node_modules && npm install && npm dedupe"
+    "update-dependencies": "rm -rf node_modules && npm install && npm dedupe",
+    "0x": "npm run build && 0x index.js"
   },
   "engines": {
     "node": ">= 12.9.0"
   },
   "license": "ISC",
   "devDependencies": {
+    "0x": "^4.10.2",
     "ts-node": "latest",
     "ts-node-dev": "^1.0.0-pre.42",
     "typescript": "latest"
