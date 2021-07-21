@@ -1157,10 +1157,9 @@ async function postBuy(
 
   let seller: User | null = null;
   {
-    const [rows] = await db.query(
-      "SELECT * FROM `users` WHERE `id` = ? FOR UPDATE",
-      [targetItem.seller_id]
-    );
+    const [rows] = await db.query("SELECT * FROM `users` WHERE `id` = ?", [
+      targetItem.seller_id,
+    ]);
     for (const row of rows) {
       seller = row as User;
     }
