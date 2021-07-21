@@ -314,7 +314,8 @@ async function postInitialize(
 
   const db = await getDBConnection();
 
-  initCategories(db);
+  await initCategories(db);
+  await initUserSimples(db);
 
   configs = null;
 
@@ -347,6 +348,22 @@ async function initCategories(db: MySQLQueryable): Promise<void> {
     "SELECT `c1`.*, `c2`.`category_name` AS `parent_category_name` FROM `categories` `c1` LEFT JOIN `categories` `c2` ON `c1`.`parent_id` = `c2`.`id`"
   );
   categories = new Map(rows.map((row) => [row.id, row]));
+}
+
+let userSimples: Map<number, UserSimple>;
+
+async function initUserSimples(db: MySQLQueryable): Promise<void> {
+  const [rows] = await db.query("SELECT * FROM `users`");
+  userSimples = new Map(
+    rows.map((row) => [
+      row.name,
+      {
+        id: row.id,
+        account_name: row.account_name,
+        num_sell_items: row.num_sell_items,
+      },
+    ])
+  );
 }
 
 async function getNewItems(
@@ -1392,6 +1409,11 @@ async function postSell(
     "UPDATE `users` SET `num_sell_items`=?, `last_bump`=? WHERE `id`=?",
     [seller.num_sell_items + 1, now, seller.id]
   );
+  userSimples.set(seller.id, {
+    id: seller.id,
+    account_name: seller.account_name,
+    num_sell_items: seller.num_sell_items + 1,
+  });
 
   await db.commit();
   await db.release();
@@ -2162,6 +2184,12 @@ async function postRegister(
     address: address,
   };
 
+  userSimples.set(result.insertId, {
+    id: result.insertId,
+    account_name: accountName,
+    num_sell_items: 0,
+  });
+
   reply.setCookie("user_id", user.id.toString(), {
     path: "/",
   });
@@ -2229,19 +2257,7 @@ async function getUserSimpleByID(
   db: MySQLQueryable,
   userID: number
 ): Promise<UserSimple | null> {
-  const [rows] = await db.query("SELECT * FROM `users` WHERE `id` = ?", [
-    userID,
-  ]);
-  for (const row of rows) {
-    const user = row as User;
-    const userSimple: UserSimple = {
-      id: user.id,
-      account_name: user.account_name,
-      num_sell_items: user.num_sell_items,
-    };
-    return userSimple;
-  }
-  return null;
+  return userSimples.get(userID) ?? null;
 }
 
 async function getCategoryByID(
