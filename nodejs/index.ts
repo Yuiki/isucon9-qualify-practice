@@ -350,7 +350,7 @@ async function initCategories(db: MySQLQueryable): Promise<void> {
   categories = new Map(rows.map((row) => [row.id, row]));
 }
 
-let userSimples: Map<number, UserSimple>;
+let userSimples: Map<number, UserSimple> = new Map();
 
 async function initUserSimples(db: MySQLQueryable): Promise<void> {
   const [rows] = await db.query("SELECT * FROM `users`");
@@ -364,6 +364,7 @@ async function initUserSimples(db: MySQLQueryable): Promise<void> {
       },
     ])
   );
+  console.log(userSimples.size);
 }
 
 async function getNewItems(
