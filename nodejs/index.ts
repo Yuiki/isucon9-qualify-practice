@@ -2252,11 +2252,15 @@ async function getLoginUser(
 
 function getSession(req: FastifyRequest) {}
 
-fastify.listen(8000, (err, _address) => {
-  if (err) {
-    throw new TraceError("Failed to listening", err);
+fastify.listen(
+  8000,
+  process.env.APP_BIND_ADDRESS || "127.0.0.1",
+  (err, _address) => {
+    if (err) {
+      throw new TraceError("Failed to listening", err);
+    }
   }
-});
+);
 
 function replyError(
   reply: FastifyReply<ServerResponse>,
